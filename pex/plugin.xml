@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Postgresql"
+            extensions="pex"
+            icon="icons/pgadmin3.gif"
+            contributorClass="se.pex.editors.PexEditorContributor"
+            class="se.pex.editors.PexEditor"
+            id="se.pex.editors.PexEditor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            name="Pex Wizards"
+            id="pex">
+      </category>
+      <wizard
+            name="Postgresql Explain file"
+            icon="icons/pgadmin3.gif"
+            category="pex"
+            class="se.pex.wizards.PexWizard"
+            id="se.pex.wizards.PexWizard">
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="se.pex.preferences.PexPreferencePage"
+            id="se.pex.preferences.PexPreferencePage"
+            category="org.eclipse.ui.preferencePages.Editors"
+            name="Postgresql Explain Analyze">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="se.pex.preferences.PreferenceInitializer">
+      </initializer>
+   </extension>
+
+</plugin>
