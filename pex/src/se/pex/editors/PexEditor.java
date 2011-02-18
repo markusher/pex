@@ -48,7 +48,6 @@ import se.pex.preferences.PreferenceConstants;
 /**
  * An editor for analyzing postgresql explain analyze outputs.
  *
- * TODO: Inform depescz
  * TODO: Create update site
  * TODO: Support subplan when parsing (Fixed but only verified on one plan)
  */
