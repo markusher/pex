@@ -9,24 +9,16 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
-import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
@@ -48,10 +40,18 @@ import se.pex.preferences.PreferenceConstants;
 /**
  * An editor for analyzing postgresql explain analyze outputs.
  *
- * TODO: Create update site
  * TODO: Support subplan when parsing (Fixed but only verified on one plan)
+ * TODO: Publish to marketplace
+ * TODO: Investigate how to sign, is that possible
+ * TODO: Incorrect row height on items not visible from the start
+ * TODO: Add JUnit test for the parser
+ * TODO: Only update the tree if something has changed
+ * TODO: Enable hiding cost and actual time data, maybe a separate column for loops
  */
 public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener {
+
+	/** Used as a holder for data in the menu. */
+	private static final String MODE_NAME = "MODE";
 
 	/** The different mark modes. */
 	enum MarkMode {
@@ -73,7 +73,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 					return mode;
 				}
 			}
-			throw new IllegalArgumentException("Mark mode does not exist: " + name);
+			throw new IllegalArgumentException(Messages.PexEditor_MarkModeNotExist + name);
 		}
 
 		/**
@@ -84,7 +84,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		 */
 		public MenuItem createMenuItem(Menu childMenu, final PexEditor editor) {
 		    MenuItem mitem = new MenuItem (childMenu, SWT.RADIO);
-		    mitem.setData("MODE", this);
+		    mitem.setData(MODE_NAME, this);
 		    mitem.setText (this.name());
 		    if (editor.markMode == this) {
 		    	mitem.setSelection(true);
@@ -95,32 +95,26 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	}
 
 	/** Bad color. */
-	private static final Color red = new Color(Display.getCurrent(), 255, 0, 0);
+	static final Color red = new Color(Display.getCurrent(), 255, 0, 0);
 	/** Pretty bad color. */
-	private static final Color brown = new Color(Display.getCurrent(), 255, 128, 51);
+	static final Color brown = new Color(Display.getCurrent(), 255, 128, 51);
 	/** A little bad color. */
-	private static final Color yellow = new Color(Display.getCurrent(), 255, 255, 102);
+	static final Color yellow = new Color(Display.getCurrent(), 255, 255, 102);
+
+	/** An implementation for the tree, made as an interface to easily be able to test different options as the SWT tree widget is pretty bad. */
+	static TreeImplementation treeImpl;
 
 	/** The text editor used in the text page. */
 	private TextEditor editor;
-
-	/** The explanation tree. */
-	private Tree tree;
 
 	/** Mode used for selecting colors. */
 	private MarkMode markMode = MarkMode.Exclusive;
 
 	/** Used to format floats. */
-	DecimalFormat decimalFormat = new DecimalFormat("#.###");
+	DecimalFormat decimalFormat = new DecimalFormat("#.###"); //$NON-NLS-1$
 
 	/** Disables multiline tree entries. */
 	private boolean disableMultiLine;
-
-	/**
-	 * An extra container for the tree, reason for this is that when redrawing the tree and not using the extra container
-	 * the variable row heights does not work any more, not sure why so created this workaround.
-	 */
-	private Composite treeContainer;
 
 	/** The editor. */
 	private final PexEditor instance = this;
@@ -130,7 +124,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		public void widgetSelected(SelectionEvent e) {
 			MenuItem item = (MenuItem) e.getSource();
 			if (item.getSelection()) {
-				instance.setMarkMode((MarkMode) ((MenuItem) e.getSource()).getData("MODE"));
+				instance.setMarkMode((MarkMode) ((MenuItem) e.getSource()).getData(MODE_NAME));
 			}
 		}
 	};
@@ -153,11 +147,11 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	void createRawTextPage() {
 		try {
 			editor = new TextEditor();
-			setPageText(addPage(editor, getEditorInput()), "Text");
+			setPageText(addPage(editor, getEditorInput()), Messages.PexEditor_Text);
 		} catch (PartInitException e) {
 			ErrorDialog.openError(
 				getSite().getShell(),
-				"Error creating nested text editor",
+				"Error creating nested text editor", //$NON-NLS-1$
 				null,
 				e.getStatus());
 		}
@@ -167,144 +161,9 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Create the explanation page.
 	 */
 	void createExplainPage() {
-		treeContainer = new Composite(getContainer(), SWT.NONE);
-		getContainer().setLayout(new FillLayout());
-		treeContainer.setLayout(new FillLayout());
-		setPageText(addPage(treeContainer), "Explain");
+		treeImpl = new NebulaTreeImpl(getContainer(), this);
+		setPageText(addPage(treeImpl.createTree()), Messages.PexEditor_Explain);
     }
-
-	/**
-	 * Creates a tree in a composite.
-	 */
-	private void createTree() {
-		tree = new Tree(treeContainer, SWT.VIRTUAL | SWT.BORDER);
-		tree.setHeaderVisible(true);
-		TreeColumn column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(300);
-		column.setResizable(true);
-		column.setText("Inclusive");
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(100);
-		column.setResizable(true);
-		column.setText("Exclusive");
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(100);
-		column.setResizable(true);
-		column.setText("Rowcount");
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setText("Information");
-		column.setWidth(1000);
-		column.setResizable(true);
-		column.setMoveable(true);
-
-	    tree.setToolTipText("");
-
-		createToolTip();
-		treeContainer.layout(true);
-		createContextMenu();
-	}
-
-	/**
-	 * Create the context menu for the tree.
-	 */
-	private void createContextMenu() {
-		Menu contextMenu = new Menu (tree);
-	    MenuItem root = new MenuItem(contextMenu, SWT.CASCADE);
-	    root.setText("Mode");
-	    Menu childMenu = new Menu(root);
-	    root.setMenu(childMenu);
-	    MarkMode.Exclusive.createMenuItem(childMenu, this);
-	    MarkMode.Inclusive.createMenuItem(childMenu, this);
-	    MarkMode.Count.createMenuItem(childMenu, this);
-	    MenuItem mitem = new MenuItem (contextMenu, SWT.PUSH);
-	    mitem.setText ("Expand children");
-	    mitem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items = tree.getSelection();
-				for (TreeItem item : items) {
-					expandTree(item);
-				}
-			}
-		});
-		tree.setMenu(contextMenu);
-	}
-
-	/**
-	 * Adds tool tips to the tree items.
-	 */
-	private void createToolTip() {
-		final Listener labelListener = new Listener() {
-			public void handleEvent(Event event) {
-				Label label = (Label) event.widget;
-				Shell shell = label.getShell();
-				switch (event.type) {
-				case SWT.MouseDown:
-					Event e = new Event();
-					e.item = (TreeItem) label.getData("_TREEITEM");
-					tree.setSelection(new TreeItem[] { (TreeItem) e.item });
-					tree.notifyListeners(SWT.Selection, e);
-					shell.dispose();
-					tree.setFocus();
-					break;
-				case SWT.MouseExit:
-					shell.dispose();
-					break;
-				}
-			}
-		};
-
-		Listener tableListener = new Listener() {
-			Shell tip = null;
-			Label label = null;
-
-			public void handleEvent(Event event) {
-				switch (event.type) {
-					case SWT.Dispose:
-					case SWT.KeyDown:
-					case SWT.MouseMove: {
-						if (tip == null)
-							break;
-						tip.dispose();
-						tip = null;
-						label = null;
-						break;
-					}
-					case SWT.MouseHover: {
-						TreeItem item = tree.getItem(new Point(event.x, event.y));
-						if (item != null && ((String) item.getData("EXTRA")).length() > 0) {
-							if (tip != null && !tip.isDisposed()) {
-								tip.dispose();
-							}
-							tip = new Shell(tree.getShell(), SWT.ON_TOP | SWT.NO_FOCUS | SWT.TOOL);
-							tip.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
-							FillLayout layout = new FillLayout();
-							layout.marginWidth = 2;
-							tip.setLayout(layout);
-							label = new Label(tip, SWT.NONE);
-							label.setForeground(Display.getCurrent().getSystemColor(SWT.COLOR_INFO_FOREGROUND));
-							label.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
-							label.setData("_TREEITEM", item);
-							label.setText((String) item.getData("EXTRA"));
-							label.addListener(SWT.MouseExit, labelListener);
-							label.addListener(SWT.MouseDown, labelListener);
-							Point size = tip.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-							Point pt = tree.toDisplay(event.x, event.y);
-							tip.setBounds(pt.x, pt.y, size.x, size.y);
-							tip.setVisible(true);
-						}
-					}
-				}
-			}
-		};
-		tree.addListener(SWT.Dispose, tableListener);
-		tree.addListener(SWT.KeyDown, tableListener);
-		tree.addListener(SWT.MouseMove, tableListener);
-		tree.addListener(SWT.MouseHover, tableListener);
-	}
 
 	/**
 	 * Sets the mark mode.
@@ -368,7 +227,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	public void init(IEditorSite site, IEditorInput editorInput)
 		throws PartInitException {
 		if (!(editorInput instanceof IFileEditorInput) && !(editorInput instanceof FileStoreEditorInput))
-			throw new PartInitException("Invalid Input: Must be IFileEditorInput: " + editorInput.getClass().getName());
+			throw new PartInitException("Input: Must be IFileEditorInput:" + editorInput.getClass().getName());
 		super.init(site, editorInput);
 		setPartName(editorInput.getName());
 	}
@@ -431,53 +290,22 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * @return EMpty string or input.
 	 */
 	private String setEmptyIfZero(String input) {
-		if ("0".equals(input)) {
-			return "";
+		if ("0".equals(input)) { //$NON-NLS-1$
+			return ""; //$NON-NLS-1$
 		}
 		return input;
 	}
 
 	/**
 	 * Insert a node and its children.
-	 * @param n The node to insert.
-	 * @param node The parent node in the tree.
+	 * @param node The node to insert.
+	 * @param parent The parent node in the tree.
 	 * @param totalTime Total execution time.
 	 */
-	private void insertNodes(Node n, TreeItem node, float totalTime) {
-		TreeItem item = null;
-		if (node != null) {
-			item = new TreeItem(node, SWT.NONE);
-		}
-		else {
-			item = new TreeItem(tree, SWT.NONE);
-		}
-		String text = n.getMainLine();
-		String extra = n.getExtraInformation();
-		if (extra.length() > 0 && !disableMultiLine) {
-			text = text + "\n" + extra;
-		}
-		item.setText(new String[] {setEmptyIfZero(decimalFormat.format(n.getTimeInclusive())), setEmptyIfZero(decimalFormat.format(n.getTimeExclusive())), n.getRowCountInfo().toString(), text});
-		item.setData("EXTRA", extra);
-		Color c = getColor(n, totalTime);
-		if (c != null) {
-			item.setBackground(c);
-		}
-		for (Node child : n.getChildren()) {
-			insertNodes(child, item, totalTime);
-		}
-	}
-
-	/**
-	 * Expands a tree item and all its children.
-	 * @param item Node to start with.
-	 */
-	private void expandTree(TreeItem item) {
-		if (item != null) {
-			item.setExpanded(true);
-			TreeItem[] items = item.getItems();
-			for (TreeItem child : items) {
-				expandTree(child);
-			}
+	private void insertNodes(Node node, Object parent, float totalTime) {
+		Object newParent = treeImpl.addNode(node, parent, disableMultiLine, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive())), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
+		for (Node child : node.getChildren()) {
+			insertNodes(child, newParent, totalTime);
 		}
 	}
 
@@ -485,17 +313,47 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Updates the explanation tree.
 	 */
 	private void updateExplanation() {
-		if (tree != null) {
-			tree.dispose();
-		}
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
 		disableMultiLine = store.getBoolean(PreferenceConstants.P_DISABLEMULTILINE);
-		createTree();
+		treeImpl.clearTree();
 		String editorText = editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
 		Node n = Engine.analyze(editorText);
 		float totalTime = n.getTotalTime();
 		insertNodes(n, null, totalTime);
-		expandTree(tree.getItem(0));
+		treeImpl.expandTree();
+	}
+
+	/**
+	 * Create the context menu for the tree.
+	 * @param tree The control which to attach the menu too.
+	 */
+	void createContextMenu(Control tree) {
+		Menu contextMenu = new Menu(tree);
+	    MenuItem root = new MenuItem(contextMenu, SWT.CASCADE);
+	    root.setText(Messages.PexEditor_Mode);
+	    Menu childMenu = new Menu(root);
+	    root.setMenu(childMenu);
+	    MarkMode.Exclusive.createMenuItem(childMenu, this);
+	    MarkMode.Inclusive.createMenuItem(childMenu, this);
+	    MarkMode.Count.createMenuItem(childMenu, this);
+	    MenuItem mitem = new MenuItem (contextMenu, SWT.PUSH);
+	    mitem.setText(Messages.PexEditor_ExpandChildren);
+	    mitem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				treeImpl.expandSelectedNode();
+			}
+		});
+	    mitem = new MenuItem(contextMenu, SWT.PUSH);
+	    mitem.setText(Messages.PexEditor_ShowLegend);
+	    mitem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				PopupDialog dialog = new LegendDialog(instance.getContainer().getShell());
+				dialog.open();
+			}
+		});
+		tree.setMenu(contextMenu);
 	}
 
 	/**
