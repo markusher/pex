@@ -40,11 +40,11 @@ public class PexPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-		addField(
-			new BooleanFieldEditor(
-				PreferenceConstants.P_DISABLEMULTILINE,
-				"Disables multiline entries",
-				getFieldEditorParent()));
+//		addField(
+//			new BooleanFieldEditor(
+//				PreferenceConstants.P_DISABLEMULTILINE,
+//				"Disables multiline entries",
+//				getFieldEditorParent()));
 
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_MARKMODE,
