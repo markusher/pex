@@ -11,6 +11,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,12 +45,11 @@ import se.pex.preferences.PreferenceConstants;
  * TODO: Support subplan when parsing (Fixed but only verified on one plan)
  * TODO: Publish to marketplace
  * TODO: Investigate how to sign, is that possible
- * TODO: Incorrect row height on items not visible from the start
  * TODO: Add JUnit test for the parser
  * TODO: Only update the tree if something has changed
  * TODO: Enable hiding cost and actual time data, maybe a separate column for loops
  */
-public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener {
+public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener, IDocumentListener {
 
 	/** Used as a holder for data in the menu. */
 	private static final String MODE_NAME = "MODE";
@@ -119,6 +120,9 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	/** The editor. */
 	private final PexEditor instance = this;
 
+	/** Dirty flag for the explanation page. */
+	private boolean documentChanged = true;
+
 	/** Selection adapter for setting markmode. */
 	private SelectionAdapter adapter = new SelectionAdapter() {
 		public void widgetSelected(SelectionEvent e) {
@@ -148,6 +152,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		try {
 			editor = new TextEditor();
 			setPageText(addPage(editor, getEditorInput()), Messages.PexEditor_Text);
+			editor.getDocumentProvider().getDocument(getEditorInput()).addDocumentListener(this);
 		} catch (PartInitException e) {
 			ErrorDialog.openError(
 				getSite().getShell(),
@@ -357,12 +362,13 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	}
 
 	/**
-	 * Calculates the contents of page 2 when the it is activated.
+	 * Calculates the contents of explanation page when the it is activated.
 	 */
 	protected void pageChange(int newPageIndex) {
 		super.pageChange(newPageIndex);
-		if (newPageIndex == 1) {
+		if (newPageIndex == 1 && documentChanged) {
 			updateExplanation();
+			documentChanged = false;
 		}
 	}
 
@@ -383,5 +389,20 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 				}
 			});
 		}
+	}
+
+	/**
+	 * @see org.eclipse.jface.text.IDocumentListener#documentAboutToBeChanged(org.eclipse.jface.text.DocumentEvent)
+	 */
+	@Override
+	public void documentAboutToBeChanged(DocumentEvent arg0) {
+	}
+
+	/**
+	 * @see org.eclipse.jface.text.IDocumentListener#documentChanged(org.eclipse.jface.text.DocumentEvent)
+	 */
+	@Override
+	public void documentChanged(DocumentEvent arg0) {
+		documentChanged = true;
 	}
 }

@@ -18,6 +18,8 @@ import se.pex.analyze.Node;
 
 /**
  * A tree implementation using the default SWT tree widget.
+ *
+ * NOTE: Tree item height is not properly implemented in the default SWT tree widget and will look bad.
  */
 public class SWTTreeImpl implements TreeImplementation {
 	/**
