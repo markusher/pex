@@ -28,6 +28,13 @@ public interface TreeImplementation {
 	public Object addNode(Node node, Object parentNode, boolean disableMultiLine, Color c, String inclusiveTime, String exclusiveTime);
 
 	/**
+	 * Alternative to using the addNode this function is called when the root is changed.
+	 * @param node The new root node.
+	 * @return <code>false</code> to ignore calling addNode.
+	 */
+	public boolean setRootNode(Node node);
+
+	/**
 	 * Clears the tree.
 	 */
 	public void clearTree();

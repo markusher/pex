@@ -223,4 +223,12 @@ public class SWTTreeImpl implements TreeImplementation {
 		}
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#setRootNode(se.pex.analyze.Node)
+	 */
+	@Override
+	public boolean setRootNode(Node node) {
+		return true;
+	}
+
 }

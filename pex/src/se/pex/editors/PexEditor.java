@@ -159,7 +159,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Create the explanation page.
 	 */
 	void createExplainPage() {
-		treeImpl = new NebulaTreeImpl(getContainer(), this);
+		treeImpl = new JFaceTreeImpl(getContainer(), this);
 		setPageText(addPage(treeImpl.createTree()), Messages.PexEditor_Explain);
     }
 
@@ -243,7 +243,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * @param totalTime The totaltime used for the query.
 	 * @return Color to use or <code>null</code>
 	 */
-	private Color getColor(Node n, float totalTime) {
+	public Color getColor(Node n, float totalTime) {
 		switch (markMode) {
 			case Exclusive:
 				if (n.getTimeExclusive() > 0.9 * totalTime) {
@@ -283,6 +283,15 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	}
 
 	/**
+	 * Formats a number as a string, 0 turns into an empty string.
+	 * @param input The input number.
+	 * @return Formatted output.
+	 */
+	public String formatFloat(float input) {
+		return setEmptyIfZero(decimalFormat.format(input));
+	}
+
+	/**
 	 * Returns an empty string if the input contains 0, otherwise it returns the input.
 	 * @param input Input string.
 	 * @return EMpty string or input.
@@ -317,7 +326,9 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		String editorText = editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
 		Node n = Engine.analyze(editorText);
 		float totalTime = n.getTotalTime();
-		insertNodes(n, null, totalTime);
+		if (!treeImpl.setRootNode(n)) {
+			insertNodes(n, null, totalTime);
+		}
 		treeImpl.expandTree();
 	}
 

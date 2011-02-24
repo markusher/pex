@@ -127,4 +127,9 @@ public class NebulaTreeImpl implements TreeImplementation {
 		expand(grid.getSelection()[0]);
 	}
 
+	@Override
+	public boolean setRootNode(Node node) {
+		return true;
+	}
+
 }
