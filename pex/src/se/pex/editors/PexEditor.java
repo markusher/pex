@@ -159,7 +159,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Create the explanation page.
 	 */
 	void createExplainPage() {
-		treeImpl = new NebulaTreeImpl(getContainer(), this);
+		treeImpl = new JFaceTreeImpl(getContainer(), this);
 		setPageText(addPage(treeImpl.createTree()), Messages.PexEditor_Explain);
     }
 
