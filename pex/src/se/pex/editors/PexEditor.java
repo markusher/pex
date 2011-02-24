@@ -46,7 +46,6 @@ import se.pex.preferences.PreferenceConstants;
  * TODO: Publish to marketplace
  * TODO: Investigate how to sign, is that possible
  * TODO: Add JUnit test for the parser
- * TODO: Only update the tree if something has changed
  * TODO: Enable hiding cost and actual time data, maybe a separate column for loops
  */
 public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener, IDocumentListener {
