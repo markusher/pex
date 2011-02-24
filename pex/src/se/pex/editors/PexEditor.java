@@ -41,12 +41,6 @@ import se.pex.preferences.PreferenceConstants;
 
 /**
  * An editor for analyzing postgresql explain analyze outputs.
- *
- * TODO: Support subplan when parsing (Fixed but only verified on one plan)
- * TODO: Publish to marketplace
- * TODO: Investigate how to sign, is that possible
- * TODO: Add JUnit test for the parser
- * TODO: Enable hiding cost and actual time data, maybe a separate column for loops
  */
 public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener, IDocumentListener {
 
