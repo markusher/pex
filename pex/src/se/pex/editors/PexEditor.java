@@ -159,7 +159,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Create the explanation page.
 	 */
 	void createExplainPage() {
-		treeImpl = new JFaceTreeImpl(getContainer(), this);
+		treeImpl = new NebulaTreeImpl(getContainer(), this);
 		setPageText(addPage(treeImpl.createTree()), Messages.PexEditor_Explain);
     }
 
@@ -326,7 +326,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		String editorText = editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
 		Node n = Engine.analyze(editorText);
 		float totalTime = n.getTotalTime();
-		if (!treeImpl.setRootNode(n)) {
+		if (treeImpl.setRootNode(n)) {
 			insertNodes(n, null, totalTime);
 		}
 		treeImpl.expandTree();

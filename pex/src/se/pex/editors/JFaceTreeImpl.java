@@ -64,20 +64,32 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 		editor.createContextMenu(tree);
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#createTree()
+	 */
 	@Override
 	public Composite createTree() {
 		return viewer.getTree();
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#addNode(se.pex.analyze.Node, java.lang.Object, boolean, org.eclipse.swt.graphics.Color, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Object addNode(Node node, Object parentNode, boolean disableMultiLine, Color c, String inclusiveTime, String exclusiveTime) {
 		return null;
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#clearTree()
+	 */
 	@Override
 	public void clearTree() {
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#expandTree()
+	 */
 	@Override
 	public void expandTree() {
 		viewer.expandAll();
@@ -96,6 +108,9 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 		}
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#expandSelectedNode()
+	 */
 	@Override
 	public void expandSelectedNode() {
 		TreeItem[] items = viewer.getTree().getSelection();
@@ -104,40 +119,58 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 		}
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
 	@Override
 	public void addListener(ILabelProviderListener arg0) {
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
+	 */
 	@Override
 	public void dispose() {
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object, java.lang.String)
+	 */
 	@Override
 	public boolean isLabelProperty(Object arg0, String arg1) {
 		return false;
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
 	@Override
 	public void removeListener(ILabelProviderListener arg0) {
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+	 */
 	@Override
 	public Image getColumnImage(Object arg0, int arg1) {
 		return null;
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+	 */
 	@Override
-	public String getColumnText(Object arg0, int arg1) {
-		switch (arg1) {
+	public String getColumnText(Object node, int column) {
+		switch (column) {
 			case 0:
-				return editor.formatFloat(((Node) arg0).getTimeInclusive());
+				return editor.formatFloat(((Node) node).getTimeInclusive());
 			case 1:
-				return editor.formatFloat(((Node) arg0).getTimeExclusive());
+				return editor.formatFloat(((Node) node).getTimeExclusive());
 			case 2:
-				return ((Node) arg0).getRowCountInfo().toString();
+				return ((Node) node).getRowCountInfo().toString();
 			default:
-				String text = ((Node) arg0).getMainLine();
-				String extra = ((Node) arg0).getExtraInformation();
+				String text = ((Node) node).getMainLine();
+				String extra = ((Node) node).getExtraInformation();
 				if (extra.length() > 0) {
 					text = text + "\n" + extra; //$NON-NLS-1$
 				}
@@ -145,32 +178,50 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 		}
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
+	 */
 	@Override
 	public void inputChanged(Viewer arg0, Object arg1, Object arg2) {
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
+	 */
 	@Override
-	public Object[] getChildren(Object arg0) {
-		Node n = (Node) arg0;
+	public Object[] getChildren(Object node) {
+		Node n = (Node) node;
 		return n.getChildren().toArray();
 	}
 
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object)
+	 */
 	@Override
-	public Object getParent(Object arg0) {
-		return ((Node) arg0).getParent();
+	public Object getParent(Object node) {
+		return ((Node) node).getParent();
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
+	 */
 	@Override
-	public boolean hasChildren(Object arg0) {
-		return ((Node) arg0).getChildren().size() > 0;
+	public boolean hasChildren(Object node) {
+		return ((Node) node).getChildren().size() > 0;
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getElements(java.lang.Object)
+	 */
 	@Override
-	public Object[] getElements(Object arg0) {
-		return getChildren(arg0);
+	public Object[] getElements(Object node) {
+		return getChildren(node);
 	}
 
+	/**
+	 * @see se.pex.editors.TreeImplementation#setRootNode(se.pex.analyze.Node)
+	 */
 	@Override
 	public boolean setRootNode(Node node) {
 		totalTime = node.getTotalTime();
@@ -178,13 +229,19 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 		return false;
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
+	 */
 	@Override
-	public Color getBackground(Object arg0, int arg1) {
-		return editor.getColor((Node) arg0, totalTime);
+	public Color getBackground(Object node, int column) {
+		return editor.getColor((Node) node, totalTime);
 	}
 
+	/**
+	 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
+	 */
 	@Override
-	public Color getForeground(Object arg0, int arg1) {
+	public Color getForeground(Object node, int column) {
 		return null;
 	}
 
