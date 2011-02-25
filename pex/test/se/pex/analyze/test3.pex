@@ -1,0 +1,49 @@
+Limit  (cost=0.00..78.89 rows=1 width=468) (actual time=0.197..0.199 rows=1 loops=1)
+  ->  Nested Loop Left Join  (cost=0.00..1104.50 rows=14 width=468) (actual time=0.193..0.193 rows=1 loops=1)
+    ->  Nested Loop  (cost=0.00..1099.83 rows=14 width=408) (actual time=0.161..0.161 rows=1 loops=1)
+    Join Filter: has_column_privilege(c.oid, a.attnum, 'select'::text)
+      ->  Merge Join  (cost=0.00..976.23 rows=41 width=350) (actual time=0.127..0.127 rows=1 loops=1)
+      Merge Cond: ((s.starelid = a.attrelid) AND (s.staattnum = a.attnum))
+        ->  Index Scan using pg_statistic_relid_att_index on pg_statistic s  (cost=0.00..262.37 rows=941 width=282) (actual time=0.033..0.033 rows=1 loops=1)
+        ->  Index Scan using pg_attribute_relid_attnum_index on pg_attribute a  (cost=0.00..670.38 rows=7674 width=70) (actual time=0.028..0.063 rows=14 loops=1)
+        Filter: (NOT a.attisdropped)
+      ->  Index Scan using pg_class_oid_index on pg_class c  (cost=0.00..3.00 rows=1 width=72) (actual time=0.016..0.016 rows=1 loops=1)
+      Index Cond: (c.oid = s.starelid)
+    ->  Index Scan using pg_namespace_oid_index on pg_namespace n  (cost=0.00..0.28 rows=1 width=68) (actual time=0.010..0.010 rows=1 loops=1)
+    Index Cond: (n.oid = c.relnamespace)
+-----
+ Limit  (cost=0.00..78.89 rows=1 width=468) (actual ti
+me=0.197..0.199 rows=1 loops=1)
+   ->  Nested Loop Left Join  (cost=0.00..1104.50 rows
+=14 width=468) (actual time=0.193..0.193 rows=1 loops=
+1)
+         ->  Nested Loop  (cost=0.00..1099.83 rows=14 
+width=408) (actual time=0.161..0.161 rows=1 loops=1)
+               Join Filter: has_column_privilege(c.oid
+, a.attnum, 'select'::text)
+               ->  Merge Join  (cost=0.00..976.23 rows
+=41 width=350) (actual time=0.127..0.127 rows=1 loops=
+1)
+                     Merge Cond: ((s.starelid = a.attr
+elid) AND (s.staattnum = a.attnum))
+                     ->  Index Scan using pg_statistic
+_relid_att_index on pg_statistic s  (cost=0.00..262.37
+ rows=941 width=282) (actual time=0.033..0.033 rows=1 
+loops=1)
+                     ->  Index Scan using pg_attribute
+_relid_attnum_index on pg_attribute a  (cost=0.00..670
+.38 rows=7674 width=70) (actual time=0.028..0.063 rows
+=14 loops=1)
+                           Filter: (NOT a.attisdropped
+)
+               ->  Index Scan using pg_class_oid_index
+ on pg_class c  (cost=0.00..3.00 rows=1 width=72) (act
+ual time=0.016..0.016 rows=1 loops=1)
+                     Index Cond: (c.oid = s.starelid)
+         ->  Index Scan using pg_namespace_oid_index o
+n pg_namespace n  (cost=0.00..0.28 rows=1 width=68) (a
+ctual time=0.010..0.010 rows=1 loops=1)
+               Index Cond: (n.oid = c.relnamespace)
+ Total runtime: 0.438 ms
+(14 rows)
+

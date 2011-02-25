@@ -16,9 +16,25 @@ public class Engine {
 	 * @return A newly created node.
 	 */
 	private static Node createNode(String[] lines, int index, Node currentNode, int indentation) {
-		Node newNode = new Node(currentNode,lines[index].trim(), indentation);
+		Node newNode = new Node(currentNode, trimLeft(lines[index]), indentation);
 		analyze(lines, index + 1, newNode, indentation);
 		return newNode;
+	}
+
+	/**
+	 * Removes leading whitespaces from a string.
+	 * @param input The string to trim.
+	 * @return The trimmed string.
+	 */
+	private static String trimLeft(String input) {
+		int index = 0;
+		while (index < input.length() && input.charAt(index) == ' ') {
+			index++;
+		}
+		if (index > 0) {
+			return input.substring(index);
+		}
+		return input;
 	}
 
 	/**
@@ -31,7 +47,8 @@ public class Engine {
 	 */
 	private static Node analyze(String[] lines, int index, Node currentNode, int indentation) {
 		for (int i = index; i < lines.length; i++) {
-			String trimmed = lines[i].trim();
+			String trimmed = trimLeft(lines[i]);
+			trimmed = lines[i].trim();
 			if (!trimmed.startsWith("---")) {
 				if (trimmed.contains("Total runtime")) {
 					return null;
@@ -46,7 +63,8 @@ public class Engine {
 					return createNode(lines, i, currentNode, indentation);
 				}
 				else {
-					if (lines[i].length() > 0 && lines[i].charAt(0) != ' ') {
+					if (currentNode != null && getIndentation(lines, i) <= indentation) {
+					//if (lines[i].length() > 0 && lines[i].charAt(0) != ' ') {
 						currentNode.appendToLastLine(lines[i]);
 					}
 					else if (trimmed.startsWith("SubPlan")) {

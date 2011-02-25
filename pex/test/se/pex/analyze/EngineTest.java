@@ -66,7 +66,20 @@ public class EngineTest {
 	private void checkMatch(StringBuilder expected, StringBuilder explain, int index) {
 		Node n = Engine.analyze(explain.toString());
 		if (!expected.toString().trim().equalsIgnoreCase(n.toString().trim())) {
-			System.out.println(n.toString());
+			String actual = n.toString();
+			System.out.println(actual);
+			System.out.println(expected);
+			boolean found = false;
+			for (int i = 0; i < actual.length() && !found; i++) {
+				if (expected.length() < i) {
+					System.out.println("expected is shorter");
+					found = true;
+				}
+				else if (actual.charAt(i) != expected.charAt(i)) {
+					System.out.println("Index: " + i + " Expected: " + expected.charAt(i) + " Actual: " + actual.charAt(i));
+					found = true;
+				}
+			}
 			Assert.fail("Error in file: test" + index + ".pex");
 		}
 	}

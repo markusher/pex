@@ -190,6 +190,9 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	 */
 	@Override
 	public Object[] getChildren(Object node) {
+		if (node instanceof HiddenRoot) {
+			return new Object[] {((HiddenRoot) node).realRoot};
+		}
 		Node n = (Node) node;
 		return n.getChildren().toArray();
 	}
@@ -200,6 +203,9 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	 */
 	@Override
 	public Object getParent(Object node) {
+		if (node instanceof HiddenRoot) {
+			return null;
+		}
 		return ((Node) node).getParent();
 	}
 
@@ -208,6 +214,9 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	 */
 	@Override
 	public boolean hasChildren(Object node) {
+		if (node instanceof HiddenRoot) {
+			return true;
+		}
 		return ((Node) node).getChildren().size() > 0;
 	}
 
@@ -225,7 +234,8 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	@Override
 	public boolean setRootNode(Node node) {
 		totalTime = node.getTotalTime();
-		viewer.setInput(node);
+		HiddenRoot root = new HiddenRoot(node);
+		viewer.setInput(root);
 		return false;
 	}
 
@@ -243,6 +253,22 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	@Override
 	public Color getForeground(Object node, int column) {
 		return null;
+	}
+
+	/**
+	 * A holder object for the root.
+	 */
+	class HiddenRoot {
+		/** The real root. */
+		public Node realRoot;
+
+		/**
+		 * Creates a new hidden root.
+		 * @param realRoot The real root to use.
+		 */
+		public HiddenRoot(Node realRoot) {
+			this.realRoot = realRoot;
+		}
 	}
 
 }
