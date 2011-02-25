@@ -2,7 +2,6 @@ package se.pex.editors;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
-import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.TreeViewerColumn;
@@ -19,7 +18,7 @@ import se.pex.analyze.Node;
 /**
  * Implementation of the tree using a TreeViewer.
  */
-public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, ITableColorProvider {
+public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider {
 	/**
 	 * A tree viewer that can ignore expanded paths that have never been executed.
 	 */
@@ -77,6 +76,11 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, 
 			public String getText(Object node) {
 				return editor.formatFloat(((Node) node).getTimeInclusive());
 			}
+
+			@Override
+			public Color getBackground(Object node) {
+				return editor.getColor((Node) node, totalTime);
+			}
 		});
 		column = new TreeViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setWidth(100);
@@ -93,6 +97,11 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, 
 			public String getText(Object node) {
 				return editor.formatFloat(((Node) node).getTimeExclusive());
 			}
+
+			@Override
+			public Color getBackground(Object node) {
+				return editor.getColor((Node) node, totalTime);
+			}
 		});
 		column = new TreeViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setWidth(100);
@@ -103,6 +112,11 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, 
 			@Override
 			public String getText(Object node) {
 				return ((Node) node).getRowCountInfo().toString();
+			}
+
+			@Override
+			public Color getBackground(Object node) {
+				return editor.getColor((Node) node, totalTime);
 			}
 		});
 		column = new TreeViewerColumn(viewer, SWT.NONE);
@@ -125,6 +139,11 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, 
 					text = text + "\n" + extra; //$NON-NLS-1$
 				}
 				return text;
+			}
+
+			@Override
+			public Color getBackground(Object node) {
+				return editor.getColor((Node) node, totalTime);
 			}
 		});
 		viewer.setContentProvider(this);
@@ -252,22 +271,6 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, 
 		HiddenRoot root = new HiddenRoot(node);
 		viewer.setInput(root);
 		return false;
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
-	 */
-	@Override
-	public Color getBackground(Object node, int column) {
-		return editor.getColor((Node) node, totalTime);
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
-	 */
-	@Override
-	public Color getForeground(Object node, int column) {
-		return null;
 	}
 
 	/**
