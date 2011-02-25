@@ -217,6 +217,14 @@ public class Node {
 		return new RowCountInfo(-1, -1);
 	}
 
+
+	/**
+	 * @return <code>true</code> if the path has been executed.
+	 */
+	public boolean isExecuted() {
+		return line.indexOf("(never executed)") == -1;
+	}
+
 	/**
 	 * Container class that contains information about the row count diff between estimated and actual.
 	 */
@@ -263,6 +271,5 @@ public class Node {
 			return count + " " + (toHigh ? "↑" : "↓");
 		}
 	}
-
 }
 

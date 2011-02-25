@@ -63,8 +63,7 @@ public class Engine {
 					return createNode(lines, i, currentNode, indentation);
 				}
 				else {
-					if (currentNode != null && getIndentation(lines, i) <= indentation) {
-					//if (lines[i].length() > 0 && lines[i].charAt(0) != ' ') {
+					if (currentNode != null && getIndentation(lines, i) <= indentation && !trimmed.startsWith("SubPlan")) {
 						currentNode.appendToLastLine(lines[i]);
 					}
 					else if (trimmed.startsWith("SubPlan")) {

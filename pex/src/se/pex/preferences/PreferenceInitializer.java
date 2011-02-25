@@ -15,7 +15,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 */
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		store.setDefault(PreferenceConstants.P_DISABLEMULTILINE, false);
+		store.setDefault(PreferenceConstants.P_FOLDNEVEREXECUTED, true);
 		store.setDefault(PreferenceConstants.P_MARKMODE, "exclusive");
 	}
 

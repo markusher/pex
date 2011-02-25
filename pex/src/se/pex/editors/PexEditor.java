@@ -13,6 +13,8 @@ import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -107,14 +109,14 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	/** Used to format floats. */
 	DecimalFormat decimalFormat = new DecimalFormat("#.###"); //$NON-NLS-1$
 
-	/** Disables multiline tree entries. */
-	private boolean disableMultiLine;
-
 	/** The editor. */
 	private final PexEditor instance = this;
 
 	/** Dirty flag for the explanation page. */
 	private boolean documentChanged = true;
+
+	/** Determines if never executed paths should be folded. */
+	private boolean foldNe;
 
 	/** Selection adapter for setting markmode. */
 	private SelectionAdapter adapter = new SelectionAdapter() {
@@ -133,8 +135,23 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		super();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		disableMultiLine = store.getBoolean(PreferenceConstants.P_DISABLEMULTILINE);
+		foldNe = store.getBoolean(PreferenceConstants.P_FOLDNEVEREXECUTED);
 		markMode = MarkMode.getMarkMode(store.getString(PreferenceConstants.P_MARKMODE));
+		store.addPropertyChangeListener(new IPropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent event) {
+				if (event.getProperty().equals(PreferenceConstants.P_FOLDNEVEREXECUTED)) {
+					instance.foldNe = (Boolean) event.getNewValue();
+				}
+			}
+		});
+	}
+
+	/**
+	 * @return <code>true</code> if never executed paths should be folded.
+	 */
+	public boolean foldNeverExecuted() {
+		return foldNe;
 	}
 
 	/**
@@ -310,7 +327,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * @param totalTime Total execution time.
 	 */
 	private void insertNodes(Node node, Object parent, float totalTime) {
-		Object newParent = treeImpl.addNode(node, parent, disableMultiLine, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive())), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
+		Object newParent = treeImpl.addNode(node, parent, false, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive())), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
 		for (Node child : node.getChildren()) {
 			insertNodes(child, newParent, totalTime);
 		}
@@ -320,8 +337,6 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Updates the explanation tree.
 	 */
 	private void updateExplanation() {
-		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		disableMultiLine = store.getBoolean(PreferenceConstants.P_DISABLEMULTILINE);
 		treeImpl.clearTree();
 		String editorText = editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
 		Node n = Engine.analyze(editorText);

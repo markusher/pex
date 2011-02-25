@@ -14,6 +14,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.swt.widgets.Widget;
 
 import se.pex.analyze.Node;
 
@@ -21,6 +22,30 @@ import se.pex.analyze.Node;
  * Implementation of the tree using a TreeViewer.
  */
 public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, ITreeContentProvider, ITableColorProvider {
+	/**
+	 * A tree viewer that can ignore expanded paths that have never been executed.
+	 */
+	class ExtendedTreeViewer extends TreeViewer {
+
+		@Override
+		protected void internalExpandToLevel(Widget widget, int level) {
+			if (editor.foldNeverExecuted() && widget instanceof TreeItem) {
+				if (!((Node) widget.getData()).isExecuted()) {
+					return;
+				}
+			}
+			super.internalExpandToLevel(widget, level);
+		}
+
+		/**
+		 * Creates a new tree viewer.
+		 * @param parent The parent in which to place the tree viewer.
+		 */
+		public ExtendedTreeViewer(Composite parent) {
+			super(parent);
+		}
+
+	}
 	/** The editor instance. */
 	private PexEditor editor;
 	/** The treeviewer. */
@@ -36,7 +61,7 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	public JFaceTreeImpl(Composite parent, PexEditor editor) {
 		this.editor = editor;
 		parent.setLayout(new FillLayout());
-		viewer = new TreeViewer(parent);
+		viewer = new ExtendedTreeViewer(parent);
 		viewer.getTree().setHeaderVisible(true);
 		Tree tree = viewer.getTree();
 		TreeColumn column = new TreeColumn(tree, SWT.NONE);

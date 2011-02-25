@@ -40,11 +40,6 @@ public class PexPreferencePage
 	 * restore itself.
 	 */
 	public void createFieldEditors() {
-//		addField(
-//			new BooleanFieldEditor(
-//				PreferenceConstants.P_DISABLEMULTILINE,
-//				"Disables multiline entries",
-//				getFieldEditorParent()));
 
 		addField(new RadioGroupFieldEditor(
 				PreferenceConstants.P_MARKMODE,
@@ -54,6 +49,8 @@ public class PexPreferencePage
 				"&Inclusive", "inclusive" },
 				{"&Count", "count"}
 		}, getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(PreferenceConstants.P_FOLDNEVEREXECUTED, "Fold Never Executed paths", getFieldEditorParent()));
 	}
 
 	/**
