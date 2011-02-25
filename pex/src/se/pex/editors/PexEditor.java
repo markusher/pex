@@ -44,7 +44,7 @@ import se.pex.preferences.PreferenceConstants;
 /**
  * An editor for analyzing postgresql explain analyze outputs.
  */
-public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener, IDocumentListener {
+public class PexEditor extends MultiPageEditorPart implements IResourceChangeListener, IDocumentListener, IPropertyChangeListener {
 
 	/** Used as a holder for data in the menu. */
 	private static final String MODE_NAME = "MODE";
@@ -137,14 +137,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
 		foldNe = store.getBoolean(PreferenceConstants.P_FOLDNEVEREXECUTED);
 		markMode = MarkMode.getMarkMode(store.getString(PreferenceConstants.P_MARKMODE));
-		store.addPropertyChangeListener(new IPropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent event) {
-				if (event.getProperty().equals(PreferenceConstants.P_FOLDNEVEREXECUTED)) {
-					instance.foldNe = (Boolean) event.getNewValue();
-				}
-			}
-		});
+		store.addPropertyChangeListener(this);
 	}
 
 	/**
@@ -203,6 +196,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Subclasses may extend.
 	 */
 	public void dispose() {
+		Activator.getDefault().getPreferenceStore().removePropertyChangeListener(this);
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 		super.dispose();
 	}
@@ -423,5 +417,15 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	@Override
 	public void documentChanged(DocumentEvent arg0) {
 		documentChanged = true;
+	}
+
+	/**
+	 * @see org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse.jface.util.PropertyChangeEvent)
+	 */
+	@Override
+	public void propertyChange(PropertyChangeEvent event) {
+		if (event.getProperty().equals(PreferenceConstants.P_FOLDNEVEREXECUTED)) {
+			instance.foldNe = (Boolean) event.getNewValue();
+		}
 	}
 }

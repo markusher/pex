@@ -1,18 +1,16 @@
 package se.pex.editors;
 
-import org.eclipse.jface.viewers.ILabelProviderListener;
+import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ColumnViewerToolTipSupport;
 import org.eclipse.jface.viewers.ITableColorProvider;
-import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.TreeViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
 
@@ -21,7 +19,7 @@ import se.pex.analyze.Node;
 /**
  * Implementation of the tree using a TreeViewer.
  */
-public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, ITreeContentProvider, ITableColorProvider {
+public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider, ITableColorProvider {
 	/**
 	 * A tree viewer that can ignore expanded paths that have never been executed.
 	 */
@@ -58,35 +56,79 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	 * @param parent The composite where to put the tree.
 	 * @param editor The editor instance.
 	 */
-	public JFaceTreeImpl(Composite parent, PexEditor editor) {
+	public JFaceTreeImpl(Composite parent, final PexEditor editor) {
 		this.editor = editor;
 		parent.setLayout(new FillLayout());
 		viewer = new ExtendedTreeViewer(parent);
 		viewer.getTree().setHeaderVisible(true);
-		Tree tree = viewer.getTree();
-		TreeColumn column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(300);
-		column.setResizable(true);
-		column.setText(Messages.Pex_Inclusive);
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(100);
-		column.setResizable(true);
-		column.setText(Messages.Pex_Exclusive);
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setWidth(100);
-		column.setResizable(true);
-		column.setText(Messages.Pex_Rowcount);
-		column.setMoveable(true);
-		column = new TreeColumn(tree, SWT.NONE);
-		column.setText(Messages.Pex_Information);
-		column.setWidth(1000);
-		column.setResizable(true);
-		column.setMoveable(true);
-		viewer.setLabelProvider(this);
+		ColumnViewerToolTipSupport.enableFor(viewer);
+		TreeViewerColumn column = new TreeViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setWidth(300);
+		column.getColumn().setResizable(true);
+		column.getColumn().setText(Messages.Pex_Inclusive);
+		column.getColumn().setMoveable(true);
+		column.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getToolTipText(Object element) {
+				return "Total execution: " + editor.formatFloat(((Node) element).getTotalTime());
+			}
+
+			@Override
+			public String getText(Object node) {
+				return editor.formatFloat(((Node) node).getTimeInclusive());
+			}
+		});
+		column = new TreeViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setWidth(100);
+		column.getColumn().setResizable(true);
+		column.getColumn().setText(Messages.Pex_Exclusive);
+		column.getColumn().setMoveable(true);
+		column.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getToolTipText(Object element) {
+				return "Total execution: " + editor.formatFloat(((Node) element).getTotalTime());
+			}
+
+			@Override
+			public String getText(Object node) {
+				return editor.formatFloat(((Node) node).getTimeExclusive());
+			}
+		});
+		column = new TreeViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setWidth(100);
+		column.getColumn().setResizable(true);
+		column.getColumn().setText(Messages.Pex_Rowcount);
+		column.getColumn().setMoveable(true);
+		column.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getText(Object node) {
+				return ((Node) node).getRowCountInfo().toString();
+			}
+		});
+		column = new TreeViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setText(Messages.Pex_Information);
+		column.getColumn().setWidth(1000);
+		column.getColumn().setResizable(true);
+		column.getColumn().setMoveable(true);
+		column.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getToolTipText(Object element) {
+				String extraInformation = ((Node) element).getExtraInformation();
+				return extraInformation.length() > 0 ? extraInformation : null;
+			}
+
+			@Override
+			public String getText(Object node) {
+				String text = ((Node) node).getMainLine();
+				String extra = ((Node) node).getExtraInformation();
+				if (extra.length() > 0) {
+					text = text + "\n" + extra; //$NON-NLS-1$
+				}
+				return text;
+			}
+		});
 		viewer.setContentProvider(this);
-		editor.createContextMenu(tree);
+		editor.createContextMenu(viewer.getTree());
 	}
 
 	/**
@@ -145,62 +187,10 @@ public class JFaceTreeImpl implements TreeImplementation, ITableLabelProvider, I
 	}
 
 	/**
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	@Override
-	public void addListener(ILabelProviderListener arg0) {
-	}
-
-	/**
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 	 */
 	@Override
 	public void dispose() {
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object, java.lang.String)
-	 */
-	@Override
-	public boolean isLabelProperty(Object arg0, String arg1) {
-		return false;
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	@Override
-	public void removeListener(ILabelProviderListener arg0) {
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-	 */
-	@Override
-	public Image getColumnImage(Object arg0, int arg1) {
-		return null;
-	}
-
-	/**
-	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-	 */
-	@Override
-	public String getColumnText(Object node, int column) {
-		switch (column) {
-			case 0:
-				return editor.formatFloat(((Node) node).getTimeInclusive());
-			case 1:
-				return editor.formatFloat(((Node) node).getTimeExclusive());
-			case 2:
-				return ((Node) node).getRowCountInfo().toString();
-			default:
-				String text = ((Node) node).getMainLine();
-				String extra = ((Node) node).getExtraInformation();
-				if (extra.length() > 0) {
-					text = text + "\n" + extra; //$NON-NLS-1$
-				}
-				return text;
-		}
 	}
 
 	/**
