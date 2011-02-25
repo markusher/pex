@@ -1,0 +1,22 @@
+Limit  (cost=0.00..312.34 rows=1 width=6548) (actual time=2.548..2.551 rows=1 loops=1)
+  ->  Append  (cost=0.00..16866.03 rows=54 width=2675) (actual time=2.545..2.545 rows=1 loops=1)
+    ->  Subquery Scan "*SELECT* 1"  (cost=0.00..16778.60 rows=43 width=1631) (actual time=2.542..2.542 rows=1 loops=1)
+      ->  Seq Scan on table1 u  (cost=0.00..16778.17 rows=43 width=1631) (actual time=2.529..2.529 rows=1 loops=1)
+        SubPlan
+        ->  Seq Scan on table2 c  (cost=0.00..6.08 rows=1 width=10) (actual time=0.133..0.159 rows=1 loops=1)
+        Filter: ((id)::text = ($0)::text)
+        ->  Seq Scan on table3 s  (cost=0.00..1.74 rows=1 width=9) (actual time=0.018..0.046 rows=1 loops=1)
+        Filter: ((id)::text = ($1)::text)
+-----
+ Limit  (cost=0.00..312.34 rows=1 width=6548) (actual time=2.548..2.551 rows=1 loops=1)
+   ->  Append  (cost=0.00..16866.03 rows=54 width=2675) (actual time=2.545..2.545 rows=1 loops=1)
+         ->  Subquery Scan "*SELECT* 1"  (cost=0.00..16778.60 rows=43 width=1631) (actual time=2.542..2.542 rows=1 loops=1)
+               ->  Seq Scan on table1 u  (cost=0.00..16778.17 rows=43 width=1631) (actual time=2.529..2.529 rows=1 loops=1)
+                     SubPlan 3
+                       ->  Seq Scan on table2 c  (cost=0.00..6.08 rows=1 width=10) (actual time=0.133..0.159 rows=1 loops=1)
+                             Filter: ((id)::text = ($0)::text)
+                     SubPlan 4
+                       ->  Seq Scan on table3 s  (cost=0.00..1.74 rows=1 width=9) (actual time=0.018..0.046 rows=1 loops=1)
+                             Filter: ((id)::text = ($1)::text)
+ Total runtime: 4.455 ms
+
