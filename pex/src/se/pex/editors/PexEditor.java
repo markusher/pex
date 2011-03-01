@@ -98,7 +98,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	static final Color yellow = new Color(Display.getCurrent(), 255, 255, 102);
 
 	/** An implementation for the tree, made as an interface to easily be able to test different options as the SWT tree widget is pretty bad. */
-	static TreeImplementation treeImpl;
+	private TreeImplementation treeImpl;
 
 	/** The text editor used in the text page. */
 	private TextEditor editor;
