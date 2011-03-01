@@ -218,6 +218,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		editor.doSaveAs();
 		setPageText(0, editor.getTitle());
 		setInput(editor.getEditorInput());
+		setPartName(editor.getEditorInput().getName());
 	}
 
 	/**
