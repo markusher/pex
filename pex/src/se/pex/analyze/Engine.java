@@ -63,17 +63,23 @@ public class Engine {
 					return createNode(lines, i, currentNode, indentation);
 				}
 				else {
-					if (currentNode != null && getIndentation(lines, i) <= indentation && !trimmed.startsWith("SubPlan")) {
-						currentNode.appendToLastLine(lines[i]);
-					}
-					else if (trimmed.startsWith("SubPlan")) {
+					if (trimmed.startsWith("SubPlan")) {
 						trimmed = lines[i + 1].trim();
 						int subplanIndentation = getIndentation(lines, i);
 						currentNode = currentNode.walkToIndentation(subplanIndentation);
 						if (!currentNode.findSubPlanNode()) {
 							new Node(currentNode, "SubPlan", subplanIndentation);
 						}
-						return createNode(lines, i + 1, currentNode, subplanIndentation);
+						return createNode(lines, i + 1, currentNode, getIndentation(lines, i + 1));
+					}
+					else if (trimmed.startsWith("Trigger for")) {
+						while (currentNode.getParent() != null) {
+							currentNode = currentNode.getParent();
+						}
+						return createNode(lines, i, currentNode, 0);
+					}
+					else if (currentNode != null && getIndentation(lines, i) <= indentation) {
+						currentNode.appendToLastLine(lines[i]);
 					}
 					else {
 						currentNode.addLine(trimmed);

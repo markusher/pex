@@ -67,7 +67,9 @@ public class EngineTest {
 		Node n = Engine.analyze(explain.toString());
 		if (!expected.toString().trim().equalsIgnoreCase(n.toString().trim())) {
 			String actual = n.toString();
+			System.out.println("actual");
 			System.out.println(actual);
+			System.out.println("expected");
 			System.out.println(expected);
 			boolean found = false;
 			for (int i = 0; i < actual.length() && !found; i++) {
