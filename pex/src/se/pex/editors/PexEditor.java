@@ -26,7 +26,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorSite;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.TextEditor;
@@ -236,8 +235,8 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 */
 	public void init(IEditorSite site, IEditorInput editorInput)
 		throws PartInitException {
-		if (!(editorInput instanceof IFileEditorInput) && !(editorInput instanceof FileStoreEditorInput))
-			throw new PartInitException("Input: Must be IFileEditorInput:" + editorInput.getClass().getName());
+		if (!(editorInput instanceof IEditorInput) && !(editorInput instanceof FileStoreEditorInput))
+			throw new PartInitException("Input: Must be IEditorInput:" + editorInput.getClass().getName());
 		super.init(site, editorInput);
 		setPartName(editorInput.getName());
 	}

@@ -1,5 +1,6 @@
 package se.pex;
 
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
@@ -19,6 +20,13 @@ public class Activator extends AbstractUIPlugin {
 	 * The constructor
 	 */
 	public Activator() {
+	}
+
+	/**
+	 * @return The state location.
+	 */
+	public static IPath getDefaultStateLocation() {
+		return plugin.getStateLocation();
 	}
 
 	/**

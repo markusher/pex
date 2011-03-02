@@ -26,6 +26,15 @@
             class="se.pex.wizards.PexWizard"
             id="se.pex.wizards.PexWizard">
       </wizard>
+      <wizard
+            category="pex"
+            class="se.pex.wizards.UntitledWizard"
+            icon="icons/pgadmin3.gif"
+            id="se.pex.wizards.UntitledWizard"
+            canFinishEarly="true"
+            hasPages="false"
+            name="Untitled Pex editor">
+      </wizard>
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">
@@ -41,6 +50,19 @@
       <initializer
             class="se.pex.preferences.PreferenceInitializer">
       </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.documentProviders">
+      <provider
+            class="org.eclipse.ui.editors.text.TextFileDocumentProvider"
+            inputTypes="se.pex.wizards.NonExistingFileEditorInput"
+            id="pex.wizards.text.NonExistingFileDocumentProvider">
+      </provider>
+      <provider
+            class="org.eclipse.ui.editors.text.TextFileDocumentProvider"
+            inputTypes="org.eclipse.ui.IURIEditorInput"
+            id="org.eclipse.ui.editors.text.URIDocumentProvider">
+      </provider>
    </extension>
 
 </plugin>
