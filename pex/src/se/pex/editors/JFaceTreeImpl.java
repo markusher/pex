@@ -74,7 +74,7 @@ public class JFaceTreeImpl implements TreeImplementation, ITreeContentProvider {
 
 			@Override
 			public String getText(Object node) {
-				return editor.formatFloat(((Node) node).getTimeInclusive());
+				return editor.formatFloat(((Node) node).getTimeInclusive(false));
 			}
 
 			@Override

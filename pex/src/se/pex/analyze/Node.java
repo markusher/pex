@@ -13,6 +13,8 @@ public class Node {
 	static final Pattern timePattern = Pattern.compile(".*actual\\stime=(.*)\\.\\.(.*)\\srows=(.*)\\sloops=(\\d*).*");
 	/** Regex for getting rowcount. */
 	static final Pattern rowCountPattern = Pattern.compile(".*cost=([\\d\\.]*)\\srows=(\\d*).*");
+	/** Regex for trigger matching. */
+	static final Pattern triggerPattern = Pattern.compile("Trigger for constraint (.+?): time=(\\d+.?\\d*) calls=(\\d+)");
 
 	/** Main line for the node. */
 	private StringBuilder line;
@@ -94,12 +96,19 @@ public class Node {
 	}
 
 	/**
+	 * @param ignoreTriggers If <code>true</code> trigger rows will return 0.
 	 * @return The execution time inclusive child nodes.
 	 */
-	public float getTimeInclusive() {
+	public float getTimeInclusive(boolean ignoreTriggers) {
 		Matcher m = timePattern.matcher(line.toString());
 		if (m.matches()) {
 			return Float.parseFloat(m.group(2)) * Integer.parseInt(m.group(4));
+		}
+		if (!ignoreTriggers) {
+			m = triggerPattern.matcher(line.toString());
+			if (m.matches()) {
+				return Float.parseFloat(m.group(2));
+			}
 		}
 		return 0;
 	}
@@ -108,9 +117,9 @@ public class Node {
 	 * @return The execution time exclusive child nodes.
 	 */
 	public float getTimeExclusive() {
-		float result = getTimeInclusive();
+		float result = getTimeInclusive(true);
 		for (Node child : children ) {
-			result -= child.getTimeInclusive();
+			result -= child.getTimeInclusive(true);
 		}
 		return result;
 	}
@@ -187,7 +196,7 @@ public class Node {
 		while (node.getParent() != null) {
 			node = node.getParent();
 		}
-		return node.getTimeInclusive();
+		return node.getTimeInclusive(true);
 	}
 
 	/**

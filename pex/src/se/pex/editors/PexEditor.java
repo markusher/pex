@@ -268,13 +268,13 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 				}
 				break;
 			case Inclusive:
-				if (n.getTimeInclusive() > 0.9 * totalTime) {
+				if (n.getTimeInclusive(true) > 0.9 * totalTime) {
 					return red;
 				}
-				else if (n.getTimeInclusive() > 0.5 * totalTime) {
+				else if (n.getTimeInclusive(true) > 0.5 * totalTime) {
 					return brown;
 				}
-				else if (n.getTimeInclusive() > 0.1 * totalTime) {
+				else if (n.getTimeInclusive(true) > 0.1 * totalTime) {
 					return yellow;
 				}
 				break;
@@ -321,7 +321,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * @param totalTime Total execution time.
 	 */
 	private void insertNodes(Node node, Object parent, float totalTime) {
-		Object newParent = treeImpl.addNode(node, parent, false, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive())), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
+		Object newParent = treeImpl.addNode(node, parent, false, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive(true))), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
 		for (Node child : node.getChildren()) {
 			insertNodes(child, newParent, totalTime);
 		}
