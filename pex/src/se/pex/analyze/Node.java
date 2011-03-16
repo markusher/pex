@@ -95,6 +95,18 @@ public class Node {
 		return line.toString();
 	}
 
+
+	/**
+	 * @return Number of loops for this node.
+	 */
+	public int getLoopCount() {
+		Matcher m = timePattern.matcher(line.toString());
+		if (m.matches()) {
+			return Integer.parseInt(m.group(4));
+		}
+		return 0;
+	}
+
 	/**
 	 * @param ignoreTriggers If <code>true</code> trigger rows will return 0.
 	 * @return The execution time inclusive child nodes.
@@ -200,12 +212,13 @@ public class Node {
 	}
 
 	/**
+	 * @param limitLength The max line length for a line.
 	 * @return The extra information on the node.
 	 */
-	public String getExtraInformation() {
+	public String getExtraInformation(int limitLength) {
 		StringBuilder res = new StringBuilder();
 		for (String line : lines) {
-			res.append(line).append("\n");
+			res.append(line.substring(0, Math.min(line.length(), limitLength))).append("\n");
 		}
 		return res.toString().trim();
 	}

@@ -47,8 +47,14 @@ public class PexPreferencePage
 			1,
 			new String[][] { { "&Exclusive", "exclusive" }, {
 				"&Inclusive", "inclusive" },
-				{"&Count", "count"}
+				{"&Count", "count"},
+				{"&Mixed", "mixed"}
 		}, getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(PreferenceConstants.P_SHOW_INCLUSIVE, "Show inclusive column", getFieldEditorParent()));
+		addField(new BooleanFieldEditor(PreferenceConstants.P_SHOW_EXCLUSIVE, "Show exclusive column", getFieldEditorParent()));
+		addField(new BooleanFieldEditor(PreferenceConstants.P_SHOW_ROWCOUNT, "Show rowcount column", getFieldEditorParent()));
+		addField(new BooleanFieldEditor(PreferenceConstants.P_SHOW_LOOP, "Show loops column", getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(PreferenceConstants.P_FOLDNEVEREXECUTED, "Fold Never Executed paths", getFieldEditorParent()));
 	}

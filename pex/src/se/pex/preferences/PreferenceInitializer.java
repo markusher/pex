@@ -17,6 +17,10 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
 		store.setDefault(PreferenceConstants.P_FOLDNEVEREXECUTED, true);
 		store.setDefault(PreferenceConstants.P_MARKMODE, "exclusive");
+		store.setDefault(PreferenceConstants.P_SHOW_INCLUSIVE, true);
+		store.setDefault(PreferenceConstants.P_SHOW_EXCLUSIVE, true);
+		store.setDefault(PreferenceConstants.P_SHOW_LOOP, true);
+		store.setDefault(PreferenceConstants.P_SHOW_ROWCOUNT, true);
 	}
 
 }

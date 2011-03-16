@@ -55,7 +55,9 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		/** Based on inclusive times. */
 		Inclusive,
 		/** Based on row counts. */
-		Count;
+		Count,
+		/** Colors the respective columns. */
+		Mixed;
 
 		/**
 		 * Returns the mark mode from its name.
@@ -252,10 +254,34 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	 * Return the color to be used on a certain row.
 	 * @param n The node to check.
 	 * @param totalTime The totaltime used for the query.
+	 * @param column The column to get color for.
 	 * @return Color to use or <code>null</code>
 	 */
-	public Color getColor(Node n, float totalTime) {
-		switch (markMode) {
+	public Color getColor(Node n, float totalTime, MarkMode column) {
+		return getColor(markMode, n, totalTime, column);
+	}
+
+	/**
+	 * Return the color to be used on a certain row.
+	 * @param mode The markmode to use.
+	 * @param n The node to check.
+	 * @param totalTime The totaltime used for the query.
+	 * @param column The column to get color for.
+	 * @return Color to use or <code>null</code>
+	 */
+	private Color getColor(MarkMode mode, Node n, float totalTime, MarkMode column) {
+		switch (mode) {
+			case Mixed:
+				if (column == MarkMode.Inclusive) {
+					return getColor(MarkMode.Inclusive, n, totalTime, null);
+				}
+				else if (column == MarkMode.Exclusive) {
+					return getColor(MarkMode.Exclusive, n, totalTime, null);
+				}
+				else if (column == MarkMode.Count) {
+					return getColor(MarkMode.Count, n, totalTime, null);
+				}
+				break;
 			case Exclusive:
 				if (n.getTimeExclusive() > 0.9 * totalTime) {
 					return red;
@@ -315,37 +341,22 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	}
 
 	/**
-	 * Insert a node and its children.
-	 * @param node The node to insert.
-	 * @param parent The parent node in the tree.
-	 * @param totalTime Total execution time.
-	 */
-	private void insertNodes(Node node, Object parent, float totalTime) {
-		Object newParent = treeImpl.addNode(node, parent, false, getColor(node, totalTime), setEmptyIfZero(decimalFormat.format(node.getTimeInclusive(true))), setEmptyIfZero(decimalFormat.format(node.getTimeExclusive())));
-		for (Node child : node.getChildren()) {
-			insertNodes(child, newParent, totalTime);
-		}
-	}
-
-	/**
 	 * Updates the explanation tree.
 	 */
 	private void updateExplanation() {
 		treeImpl.clearTree();
 		String editorText = editor.getDocumentProvider().getDocument(editor.getEditorInput()).get();
 		Node n = Engine.analyze(editorText);
-		float totalTime = n.getTotalTime();
-		if (treeImpl.setRootNode(n)) {
-			insertNodes(n, null, totalTime);
-		}
+		treeImpl.setRootNode(n);
 		treeImpl.expandTree();
 	}
 
 	/**
 	 * Create the context menu for the tree.
 	 * @param tree The control which to attach the menu too.
+	 * @return The menu that was created.
 	 */
-	void createContextMenu(Control tree) {
+	public Menu createContextMenu(Control tree) {
 		Menu contextMenu = new Menu(tree);
 	    MenuItem root = new MenuItem(contextMenu, SWT.CASCADE);
 	    root.setText(Messages.PexEditor_Mode);
@@ -354,6 +365,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	    MarkMode.Exclusive.createMenuItem(childMenu, this);
 	    MarkMode.Inclusive.createMenuItem(childMenu, this);
 	    MarkMode.Count.createMenuItem(childMenu, this);
+	    MarkMode.Mixed.createMenuItem(childMenu, this);
 	    MenuItem mitem = new MenuItem (contextMenu, SWT.PUSH);
 	    mitem.setText(Messages.PexEditor_ExpandChildren);
 	    mitem.addSelectionListener(new SelectionAdapter() {
@@ -372,6 +384,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 			}
 		});
 		tree.setMenu(contextMenu);
+		return contextMenu;
 	}
 
 	/**
