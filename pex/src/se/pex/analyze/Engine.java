@@ -64,13 +64,13 @@ public class Engine {
 				}
 				else {
 					if (trimmed.startsWith("SubPlan")) {
+						final String subplan = trimmed;
 						trimmed = lines[i + 1].trim();
 						int subplanIndentation = getIndentation(lines, i);
 						currentNode = currentNode.walkToIndentation(subplanIndentation);
-						if (!currentNode.findSubPlanNode()) {
-							new Node(currentNode, "SubPlan", subplanIndentation);
-						}
-						return createNode(lines, i + 1, currentNode, getIndentation(lines, i + 1));
+						final Node subPlanNode = new Node(currentNode, subplan, subplanIndentation);
+						createNode(lines, i + 1, subPlanNode, getIndentation(lines, i + 1));
+						return subPlanNode;
 					}
 					else if (trimmed.startsWith("Trigger for")) {
 						while (currentNode.getParent() != null) {

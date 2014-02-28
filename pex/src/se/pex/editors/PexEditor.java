@@ -1,6 +1,5 @@
 package se.pex.editors;
 
-
 import java.text.DecimalFormat;
 
 import org.eclipse.core.resources.IMarker;
@@ -11,14 +10,25 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IDocumentListener;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.text.Region;
+import org.eclipse.jface.text.source.DefaultCharacterPairMatcher;
+import org.eclipse.jface.text.source.ICharacterPairMatcher;
+import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
@@ -33,6 +43,7 @@ import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiPageEditorPart;
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 
 import se.pex.Activator;
 import se.pex.analyze.Engine;
@@ -102,7 +113,7 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 	private TreeImplementation treeImpl;
 
 	/** The text editor used in the text page. */
-	private TextEditor editor;
+	public PexTextEditor editor;
 
 	/** Mode used for selecting colors. */
 	private MarkMode markMode = MarkMode.Exclusive;
@@ -148,13 +159,139 @@ public class PexEditor extends MultiPageEditorPart implements IResourceChangeLis
 		return foldNe;
 	}
 
+	static public class PexTextEditor extends TextEditor {
+		private final static String EDITOR_MATCHING_BRACKETS = "matchingBrackets";
+		private final static String EDITOR_MATCHING_BRACKETS_COLOR= "matchingBracketsColor";
+
+		@Override
+		protected void configureSourceViewerDecorationSupport (SourceViewerDecorationSupport support) {
+			super.configureSourceViewerDecorationSupport(support);
+
+			support.setCharacterPairMatcher(matcher);
+			support.setMatchingCharacterPainterPreferenceKeys(EDITOR_MATCHING_BRACKETS,EDITOR_MATCHING_BRACKETS_COLOR);
+
+			//Enable bracket highlighting in the preference store
+			IPreferenceStore store = getPreferenceStore();
+			store.setDefault(EDITOR_MATCHING_BRACKETS, true);
+			store.setDefault(EDITOR_MATCHING_BRACKETS_COLOR, "128,128,128");
+		}
+
+		protected final static char[] BRACKETS= { '{', '}', '(', ')', '[', ']', '<', '>' };
+
+		private final ICharacterPairMatcher matcher = new DefaultCharacterPairMatcher(BRACKETS ,
+				IDocumentExtension3.DEFAULT_PARTITIONING);
+
+		private static boolean isBracket(char character) {
+			for (int i= 0; i != BRACKETS.length; ++i)
+				if (character == BRACKETS[i])
+					return true;
+			return false;
+		}
+
+		private static boolean isSurroundedByBrackets(IDocument document, int offset) {
+			if (offset == 0 || offset == document.getLength())
+				return false;
+
+			try {
+				return
+					isBracket(document.getChar(offset - 1)) &&
+					isBracket(document.getChar(offset));
+
+			} catch (BadLocationException e) {
+				return false;
+			}
+		}
+
+		/**
+		 * Returns the signed current selection.
+		 * The length will be negative if the resulting selection
+		 * is right-to-left (RtoL).
+		 * <p>
+		 * The selection offset is model based.
+		 * </p>
+		 *
+		 * @param sourceViewer the source viewer
+		 * @return a region denoting the current signed selection, for a resulting RtoL selections length is < 0
+		 */
+		protected IRegion getSignedSelection(ISourceViewer sourceViewer) {
+			StyledText text= sourceViewer.getTextWidget();
+			Point selection= text.getSelectionRange();
+
+			if (text.getCaretOffset() == selection.x) {
+				selection.x= selection.x + selection.y;
+				selection.y= -selection.y;
+			}
+
+			selection.x= widgetOffset2ModelOffset(sourceViewer, selection.x);
+
+			return new Region(selection.x, selection.y);
+		}
+
+
+		public void gotoMatchingBracket() {
+				ISourceViewer sourceViewer= getSourceViewer();
+				IDocument document= sourceViewer.getDocument();
+				if (document == null) {
+					return;
+				}
+
+				IRegion selection= getSignedSelection(sourceViewer);
+
+				final int selectionLength = Math.abs(selection.getLength());
+				if (selectionLength > 1) {
+					sourceViewer.getTextWidget().getDisplay().beep();
+					return;
+				}
+
+				int sourceCaretOffset= selection.getOffset() + selection.getLength();
+				if (isSurroundedByBrackets(document, sourceCaretOffset)) {
+					sourceCaretOffset -= selection.getLength();
+				}
+
+				final IRegion region= matcher.match(document, sourceCaretOffset);
+				if (region == null) {
+					sourceViewer.getTextWidget().getDisplay().beep();
+					return;
+				}
+
+				int offset= region.getOffset();
+				int length= region.getLength();
+
+				if (length < 1)
+					return;
+
+				int anchor = matcher.getAnchor();
+				int targetOffset= (ICharacterPairMatcher.RIGHT == anchor) ? offset + 1: offset + length;
+
+				boolean visible= false;
+				if (sourceViewer instanceof ITextViewerExtension5) {
+					ITextViewerExtension5 extension= (ITextViewerExtension5) sourceViewer;
+					visible= (extension.modelOffset2WidgetOffset(targetOffset) > -1);
+				} else {
+					IRegion visibleRegion= sourceViewer.getVisibleRegion();
+					visible= (targetOffset >= visibleRegion.getOffset() && targetOffset <= visibleRegion.getOffset() + visibleRegion.getLength());
+				}
+
+				if (!visible) {
+					sourceViewer.getTextWidget().getDisplay().beep();
+					return;
+				}
+
+				if (selection.getLength() < 0)
+					targetOffset -= selection.getLength();
+
+				sourceViewer.setSelectedRange(targetOffset, selection.getLength());
+				sourceViewer.revealRange(targetOffset, selection.getLength());
+			}
+	}
+
 	/**
 	 * Creates page 0 of the multi-page editor,
 	 * which contains a text editor.
 	 */
 	void createRawTextPage() {
 		try {
-			editor = new TextEditor();
+			editor = new PexTextEditor();
 			setPageText(addPage(editor, getEditorInput()), Messages.PexEditor_Text);
 			editor.getDocumentProvider().getDocument(getEditorInput()).addDocumentListener(this);
 		} catch (PartInitException e) {
