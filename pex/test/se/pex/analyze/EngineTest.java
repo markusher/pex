@@ -1,11 +1,11 @@
 package se.pex.analyze;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class EngineTest {
 			InputStream stream = Engine.class.getResourceAsStream("test" + index + ".pex");
 			if (stream == null) {
 				if (index == 1) {
-					Assert.fail("Error loading first test file");
+					assertTrue("Error loading first test file", false);
 				}
 				return;
 			}
@@ -82,7 +82,7 @@ public class EngineTest {
 					found = true;
 				}
 			}
-			Assert.fail("Error in file: test" + index + ".pex");
+			assertTrue("Error in file: test" + index + ".pex", false);
 		}
 	}
 

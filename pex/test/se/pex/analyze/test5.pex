@@ -6,12 +6,12 @@ Subquery Scan "*SELECT*"  (cost=4408.06..4433.64 rows=1 width=36) (actual time=2
       ->  Bitmap Index Scan on idx_table1  (cost=0.00..149.35 rows=4944 width=0) (actual time=2.834..2.834 rows=9983 loops=1)
       Index Cond: (identifier = 1)
     SubPlan
-    ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.008..0.009 rows=1 loops=4711)
-    Index Cond: (xid = $0)
-    ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.006..0.008 rows=1 loops=4711)
-    Index Cond: (xid = $0)
-    ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.006..0.008 rows=1 loops=4711)
-    Index Cond: (xid = $0)
+      ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.008..0.009 rows=1 loops=4711)
+      Index Cond: (xid = $0)
+      ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.006..0.008 rows=1 loops=4711)
+      Index Cond: (xid = $0)
+      ->  Index Scan using table2_pkey on table2 r  (cost=0.00..8.48 rows=1 width=8) (actual time=0.006..0.008 rows=1 loops=4711)
+      Index Cond: (xid = $0)
   Trigger for constraint fk1: time=1.056 calls=1
   Trigger for constraint fk2: time=1.208 calls=1
 -----
